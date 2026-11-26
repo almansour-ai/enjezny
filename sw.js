@@ -1,5 +1,5 @@
 // إنجزني service worker: كاش بسيط عشان التطبيق يفتح بسرعة ويشتغل لو النت ضعيف.
-const CACHE = 'anjezny-v21';
+const CACHE = 'anjezny-v22';
 const SHELL = [
     './',
     'index.html',
@@ -13,7 +13,9 @@ const SHELL = [
     'founder-gehad-v5.jpg',
     'manifest.webmanifest',
     'icons/icon-192.png',
-    'icons/icon-512.png'
+    'icons/icon-512.png',
+    'apple-touch-icon.png',
+    'apple-touch-icon-167.png'
 ];
 
 self.addEventListener('install', (event) => {
