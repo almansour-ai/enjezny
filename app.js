@@ -99,6 +99,16 @@
     document.addEventListener('DOMContentLoaded', function () {
         var search = document.getElementById('anj-search');
         if (!search) return;
+        if (PROVIDERS.length === 0) {
+            // الدليل لسه فاضي: نخفي البحث والأصناف ونظهر ملحوظة ودية بدلها.
+            search.hidden = true;
+            document.getElementById('anj-chips').hidden = true;
+            document.getElementById('anj-count').hidden = true;
+            var empty = document.getElementById('anj-empty');
+            empty.textContent = 'الدليل لسه فاضي. أول ما الصنايعية والمحلات يسجلوا، هتلاقيهم هنا.';
+            empty.hidden = false;
+            return;
+        }
         search.addEventListener('input', function () {
             state.query = search.value;
             renderCards();
