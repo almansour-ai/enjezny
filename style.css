@@ -37,6 +37,12 @@ body {
     margin: 0;
 }
 
+.anj-header-logo {
+    display: block;
+    width: min(320px, 70vw);
+    height: auto;
+}
+
 .anj-fact {
     color: var(--teal);
     font-weight: 700;
