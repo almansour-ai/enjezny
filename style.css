@@ -253,6 +253,10 @@ body {
     padding: 12px 24px;
 }
 
+.anj-app-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.anj-share-ic { width: 18px; height: 18px; vertical-align: -3px; color: var(--teal); }
+
 .anj-empty {
     border: 1px dashed var(--hairline);
     border-radius: 12px;
