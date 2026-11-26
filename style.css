@@ -49,13 +49,20 @@ body {
     margin: 4px 0 16px;
 }
 
+.anj-founder-frame {
+    display: inline-block;
+    padding: 3px;
+    background: var(--teal);
+    clip-path: polygon(50% 0, 93.3% 25%, 93.3% 75%, 50% 100%, 6.7% 75%, 6.7% 25%);
+}
+
 .anj-founder-photo {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
+    display: block;
+    width: 56px;
+    height: 56px;
     object-fit: cover;
     object-position: center;
-    border: 3px solid var(--teal-soft);
+    clip-path: polygon(50% 0, 93.3% 25%, 93.3% 75%, 50% 100%, 6.7% 75%, 6.7% 25%);
 }
 
 .anj-founder-name {
