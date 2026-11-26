@@ -259,3 +259,19 @@ body {
 }
 
 .anj-footer a { color: var(--teal); }
+
+.anj-contact-icons { display: inline-flex; gap: 8px; align-items: center; }
+
+.anj-ic {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: 1px solid var(--hairline);
+    color: var(--teal);
+    text-decoration: none;
+}
+
+.anj-ic svg { width: 18px; height: 18px; }
