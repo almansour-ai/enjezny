@@ -64,6 +64,19 @@ body {
     margin: 8px 0 0;
 }
 
+.anj-founder-title {
+    font-size: 13px;
+    color: var(--teal);
+    font-weight: 700;
+    margin: 2px 0 0;
+}
+
+.anj-founder-second {
+    margin: 24px 0 0;
+    padding-top: 20px;
+    border-top: 1px solid rgba(0,0,0,.08);
+}
+
 .anj-founder-fb {
     text-align: center;
     margin: 12px 0 0;
