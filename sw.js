@@ -1,16 +1,16 @@
 // إنجزني service worker: كاش بسيط عشان التطبيق يفتح بسرعة ويشتغل لو النت ضعيف.
-const CACHE = 'anjezny-v13';
+const CACHE = 'anjezny-v14';
 const SHELL = [
     './',
     'index.html',
     'privacy.html',
-    'style.css?v=11',
+    'style.css?v=12',
     'app.js',
     'providers.js',
     'hero.png',
     'logo-header.png',
-    'founder-v3.jpg',
-    'founder-gehad.jpg',
+    'founder-v4.jpg',
+    'founder-gehad-v2.jpg',
     'manifest.webmanifest',
     'icons/icon-192.png',
     'icons/icon-512.png'
