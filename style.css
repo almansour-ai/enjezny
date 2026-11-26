@@ -53,7 +53,7 @@ body {
     display: inline-block;
     padding: 3px;
     background: var(--teal);
-    clip-path: polygon(50% 0, 93.3% 25%, 93.3% 75%, 50% 100%, 6.7% 75%, 6.7% 25%);
+    border-radius: 12px;
 }
 
 .anj-founder-photo {
@@ -62,7 +62,7 @@ body {
     height: 56px;
     object-fit: cover;
     object-position: center;
-    clip-path: polygon(50% 0, 93.3% 25%, 93.3% 75%, 50% 100%, 6.7% 75%, 6.7% 25%);
+    border-radius: 10px;
 }
 
 .anj-founder-name {
