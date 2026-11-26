@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0f766e">
+<title>لوحة تحكم أنجزني</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--teal:#0f766e;--teal-soft:#d9eeeb;--ink:#26221e;--ink-2:#6f6a63;--line:#e5e1da;--page:#faf9f7;--sand:#f3f0ea;--red:#b42318;--red-soft:#fde8e6;--amber:#fff4d6}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--sand);color:var(--ink);font-family:'Tajawal','Segoe UI',Tahoma,Arial,sans-serif;line-height:1.6;font-size:16px}
+.wrap{max-width:680px;margin:0 auto;background:var(--page);min-height:100vh;padding:16px 14px 110px}
+h1{font-size:24px;margin:0;font-weight:800}
+h2{font-size:19px;margin:0 0 10px;font-weight:800}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.top a{color:var(--teal);font-weight:700;text-decoration:none}
+.tabs{display:flex;gap:6px;margin:14px 0;position:sticky;top:0;background:var(--page);padding:6px 0;z-index:5}
+.tab{flex:1;min-height:48px;border:1px solid var(--line);background:#fff;border-radius:12px;font:inherit;font-weight:700;color:var(--ink);cursor:pointer}
+.tab.on{background:var(--teal);color:#fff;border-color:var(--teal)}
+.btn{font:inherit;font-weight:800;min-height:52px;padding:10px 18px;border-radius:12px;border:1px solid var(--teal);background:#fff;color:var(--teal);cursor:pointer;font-size:17px;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+.btn.main{background:var(--teal);color:#fff}
+.btn.red{border-color:var(--red);color:var(--red)}
+.btn.wide{width:100%}
+.btn.sm{min-height:44px;font-size:15px;padding:6px 14px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:10px 0}
+.card b{font-size:17px}
+.meta{color:var(--ink-2);font-size:14px}
+.ph{direction:ltr;text-align:right;color:var(--ink-2);font-size:15px}
+.tag{display:inline-block;background:var(--teal-soft);color:var(--teal);border-radius:999px;padding:0 10px;font-size:13px;font-weight:700;margin-inline-start:6px}
+input[type=text],input[type=tel],input[type=password],input[type=search],select{width:100%;min-height:50px;font:inherit;font-size:17px;border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:#fff;color:var(--ink)}
+input:focus,select:focus{outline:2px solid var(--teal)}
+label{display:block;font-weight:700;margin:12px 0 4px}
+.chk{display:flex;gap:10px;align-items:flex-start;margin:12px 0;font-weight:400}
+.chk input{width:26px;height:26px;margin:2px 0 0;flex:none}
+.note{background:var(--teal-soft);border-radius:12px;padding:10px 12px;font-size:14.5px;margin:10px 0}
+.warn{background:var(--amber);border-radius:12px;padding:10px 12px;font-size:14.5px;margin:10px 0}
+.err{background:var(--red-soft);color:var(--red);border-radius:12px;padding:10px 12px;margin:10px 0;font-size:15px}
+.bar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);padding:10px 14px;z-index:9}
+.bar .in{max-width:680px;margin:0 auto;display:flex;gap:8px;align-items:center}
+.bar .st{flex:1;font-size:13.5px;color:var(--ink-2);line-height:1.4}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:20}
+.modal.on{display:flex}
+.sheet{background:var(--page);width:100%;max-width:680px;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:16px 14px 24px}
+.hidden{display:none!important}
+ol{padding-inline-start:22px;margin:6px 0}
+li{margin:6px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><h1>لوحة تحكم أنجزني</h1><a href="./">الموقع ←</a></div>
+
+  <div class="tabs">
+    <button class="tab on" data-tab="list">الدليل</button>
+    <button class="tab" data-tab="reqs">الطلبات</button>
+    <button class="tab" data-tab="set">النشر</button>
+  </div>
+
+  <div id="msg"></div>
+
+  <!-- الدليل -->
+  <section id="tab-list">
+    <button class="btn main wide" id="addBtn">+ إضافة صنايعي أو محل</button>
+    <div style="margin-top:12px"><input type="search" id="q" placeholder="دوّر بالاسم أو الصنف أو المنطقة"></div>
+    <p class="meta" id="count"></p>
+    <div id="cards"></div>
+  </section>
+
+  <!-- الطلبات -->
+  <section id="tab-reqs" class="hidden">
+    <h2>طلبات التسجيل من الفورم</h2>
+    <div class="note">اللي بيسجل في الفورم بيوصلك إيميل وبيتحفظ في Tally. الردود محمية بحسابك على Tally، فالصفحة دي مش بتقدر تقراها لوحدها. افتح الردود، وانقل كل واحد وافق من الفورم لزرار الإضافة.</div>
+    <p><a class="btn main wide" href="https://tally.so/forms/OQ7gNA/submissions" target="_blank" rel="noopener">افتح الردود على Tally</a></p>
+    <p><a class="btn wide" href="https://tally.so/r/OQ7gNA" target="_blank" rel="noopener">افتح الفورم نفسه</a></p>
+    <h2 style="margin-top:20px">إزاي تضيف واحد من الردود؟</h2>
+    <ol>
+      <li>افتح الردود على Tally وشوف الاسم والصنف والمنطقة والرقم.</li>
+      <li>اتأكد إنه حاطط علامة الموافقة على ظهور اسمه ورقمه.</li>
+      <li>ارجع هنا، دوس تبويب "الدليل" وبعدين "+ إضافة"، واكتب بياناته.</li>
+      <li>دوس "نشر التعديلات" تحت.</li>
+    </ol>
+    <p><button class="btn wide" id="goAdd">+ إضافة دلوقتي</button></p>
+  </section>
+
+  <!-- النشر والإعدادات -->
+  <section id="tab-set" class="hidden">
+    <h2>مفتاح النشر</h2>
+    <div class="note">عشان زرار "نشر التعديلات" يشتغل لازم مفتاح GitHub مخصوص للموقع ده بس. بتحطه مرة واحدة وبيتحفظ على موبايلك أنت بس. ماتبعتوش لحد في الشات ولا تحطه في أي مكان تاني.</div>
+    <div id="keyState" class="meta"></div>
+    <label for="tok">المفتاح</label>
+    <input type="password" id="tok" autocomplete="off" placeholder="الصق المفتاح هنا" dir="ltr">
+    <div class="row" style="margin-top:10px">
+      <button class="btn main" id="saveTok">حفظ وتجربة المفتاح</button>
+      <button class="btn red" id="delTok">مسح المفتاح من الموبايل</button>
+    </div>
+    <h2 style="margin-top:24px">من غير مفتاح؟</h2>
+    <div class="note">ممكن تضيف وتعدّل عادي وتدوس "نسخ الملف"، وتبعته لمساعدك في الشات وهو ينشره. الملف فيه القايمة كلها بعد تعديلك.</div>
+    <div class="row">
+      <button class="btn" id="copyBtn">نسخ الملف</button>
+      <button class="btn" id="shareBtn">مشاركة الملف</button>
+    </div>
+    <h2 style="margin-top:24px">تعديلات لسه منشورتش</h2>
+    <p class="meta" id="draftInfo"></p>
+    <button class="btn red" id="resetBtn">إلغاء تعديلاتي ورجوع لآخر نسخة منشورة</button>
+  </section>
+</div>
+
+<div class="bar">
+  <div class="in">
+    <div class="st" id="status">جاري التحميل...</div>
+    <button class="btn main" id="pubBtn">نشر التعديلات</button>
+  </div>
+</div>
+
+<!-- نموذج إضافة / تعديل -->
+<div class="modal" id="modal">
+  <div class="sheet">
+    <h2 id="mTitle">إضافة</h2>
+    <div id="mErr"></div>
+    <label for="fKind">النوع</label>
+    <select id="fKind">
+      <option>صنايعي</option>
+      <option>محل</option>
+      <option>شركة خدمات أو مقاولات</option>
+    </select>
+    <label for="fName">الاسم</label>
+    <input type="text" id="fName" placeholder="مثال: الأسطى محمود سالم">
+    <label for="fTrade">الصنف أو التخصص</label>
+    <input type="text" id="fTrade" list="trades" placeholder="مثال: سباك، نقاش، محل بويات">
+    <datalist id="trades"></datalist>
+    <label for="fArea">المنطقة</label>
+    <input type="text" id="fArea" placeholder="مثال: الحسينية، سعود">
+    <label for="fPhone">رقم التليفون</label>
+    <input type="tel" id="fPhone" inputmode="tel" dir="ltr" placeholder="01012345678">
+    <label class="chk"><input type="checkbox" id="fWa" checked><span>الرقم عليه واتساب</span></label>
+    <label class="chk"><input type="checkbox" id="fOk"><span>اتأكدت إنه وافق على ظهور اسمه ورقمه في الدليل</span></label>
+    <div class="row" style="margin-top:14px">
+      <button class="btn main" id="mSave" style="flex:1">حفظ</button>
+      <button class="btn" id="mCancel" style="flex:1">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var REPO = 'anjezny/anjezny', BRANCH = 'main', FILE = 'providers.js';
+  var HEADER = [
+    '// قايمة الصنايعية والمحلات اللي بتظهر في دليل أنجزني.',
+    '// الملف ده بتكتبه لوحة التحكم (admin.html). لو عدّلته بإيدك خلّي الشكل زي ما هو.',
+    '// phone و whatsapp: الرقم بالصيغة الدولية من غير علامة +.'
+  ].join('\n');
+  var $ = function (id) { return document.getElementById(id); };
+  var data = [];          // الشغل الحالي
+  var published = '';     // آخر نص منشور (للمقارنة)
+  var sha = null;
+  var editing = null;     // id أو '' للجديد
+  var tokKey = 'anj_gh_token', draftKey = 'anj_admin_draft';
+
+  function norm(s) { return (s || '').toLowerCase().replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').trim(); }
+  function digits(s) {
+    return (s || '').replace(/[٠-٩]/g, function (d) { return String(d.charCodeAt(0) - 1632); })
+                    .replace(/[۰-۹]/g, function (d) { return String(d.charCodeAt(0) - 1776); })
+                    .replace(/\D/g, '');
+  }
+  function toIntl(raw) {
+    var d = digits(raw);
+    if (d.indexOf('0020') === 0) d = d.slice(2);
+    if (d.indexOf('20') === 0 && d.length === 12) return d;
+    if (d.charAt(0) === '0' && d.length === 11) return '20' + d.slice(1);
+    return null;
+  }
+  function toLocal(intl) { return '0' + intl.slice(2); }
+
+  function serialize(list) {
+    var body = list.map(function (p) { return '  ' + JSON.stringify(p) + ','; }).join('\n');
+    return HEADER + '\nconst PROVIDERS = [\n' + body + (body ? '\n' : '') + '];\n';
+  }
+  function parse(text) {
+    var m = text.match(/const\s+PROVIDERS\s*=\s*(\[[\s\S]*\])\s*;?\s*$/);
+    if (!m) throw new Error('شكل ملف القايمة مش مفهوم');
+    var arr = (new Function('return ' + m[1]))();
+    if (!Array.isArray(arr)) throw new Error('شكل ملف القايمة مش مفهوم');
+    return arr;
+  }
+  function b64enc(str) {
+    var bytes = new TextEncoder().encode(str), s = '';
+    for (var i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+    return btoa(s);
+  }
+  function b64dec(b64) {
+    var bin = atob(b64.replace(/\s/g, '')), bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  }
+
+  function say(text, cls) {
+    $('msg').innerHTML = '';
+    if (!text) return;
+    var d = document.createElement('div');
+    d.className = cls || 'note';
+    d.textContent = text;
+    $('msg').appendChild(d);
+    if (cls !== 'err') setTimeout(function () { if ($('msg').firstChild === d) $('msg').innerHTML = ''; }, 6000);
+    window.scrollTo(0, 0);
+  }
+
+  function dirty() { return serialize(data) !== published; }
+  function updateBar() {
+    var d = dirty();
+    $('pubBtn').disabled = !d;
+    $('pubBtn').style.opacity = d ? 1 : .5;
+    $('status').textContent = d ? 'في تعديلات لسه منشورتش على الموقع' : 'كل حاجة منشورة. الموقع زي ما هو هنا.';
+    $('draftInfo').textContent = d ? 'عندك تعديلات محفوظة على الموبايل ولسه منشورتش.' : 'مفيش تعديلات معلّقة.';
+    if (d) localStorage.setItem(draftKey, JSON.stringify(data)); else localStorage.removeItem(draftKey);
+  }
+
+  function render() {
+    var q = norm($('q').value);
+    var list = data.filter(function (p) { return !q || norm([p.name, p.trade, p.area, p.kind].join(' ')).indexOf(q) !== -1; });
+    $('count').textContent = list.length + ' من ' + data.length;
+    var box = $('cards'); box.innerHTML = '';
+    if (!data.length) {
+      var e = document.createElement('div'); e.className = 'note';
+      e.textContent = 'الدليل فاضي. دوس "+ إضافة صنايعي أو محل" وابدأ بأول واحد.';
+      box.appendChild(e);
+    }
+    list.forEach(function (p) {
+      var c = document.createElement('div'); c.className = 'card';
+      var t = document.createElement('div');
+      var b = document.createElement('b'); b.textContent = p.name;
+      t.appendChild(b);
+      if (p.kind) { var k = document.createElement('span'); k.className = 'tag'; k.textContent = p.kind; t.appendChild(k); }
+      var m = document.createElement('div'); m.className = 'meta'; m.textContent = (p.trade || '') + ' · ' + (p.area || '');
+      var ph = document.createElement('div'); ph.className = 'ph'; ph.textContent = p.phoneDisplay + (p.whatsapp ? '  (واتساب)' : '');
+      var r = document.createElement('div'); r.className = 'row'; r.style.marginTop = '8px';
+      var eb = document.createElement('button'); eb.className = 'btn sm'; eb.textContent = 'تعديل';
+      eb.onclick = function () { openForm(p.id); };
+      var db = document.createElement('button'); db.className = 'btn sm red'; db.textContent = 'مسح';
+      db.onclick = function () {
+        if (confirm('تمسح "' + p.name + '" من الدليل؟')) {
+          data = data.filter(function (x) { return x.id !== p.id; });
+          render(); updateBar();
+        }
+      };
+      r.appendChild(eb); r.appendChild(db);
+      c.appendChild(t); c.appendChild(m); c.appendChild(ph); c.appendChild(r);
+      box.appendChild(c);
+    });
+    var dl = $('trades'); dl.innerHTML = '';
+    data.map(function (p) { return p.trade; }).filter(function (t, i, a) { return t && a.indexOf(t) === i; })
+      .forEach(function (t) { var o = document.createElement('option'); o.value = t; dl.appendChild(o); });
+  }
+
+  function openForm(id) {
+    editing = id || '';
+    $('mErr').innerHTML = '';
+    var p = id ? data.filter(function (x) { return x.id === id; })[0] : null;
+    $('mTitle').textContent = p ? 'تعديل' : 'إضافة صنايعي أو محل';
+    $('fKind').value = p && p.kind ? p.kind : 'صنايعي';
+    $('fName').value = p ? p.name : '';
+    $('fTrade').value = p ? p.trade : '';
+    $('fArea').value = p ? p.area : '';
+    $('fPhone').value = p ? p.phoneDisplay : '';
+    $('fWa').checked = p ? !!p.whatsapp : true;
+    $('fOk').checked = !!p;
+    $('modal').classList.add('on');
+  }
+  function closeForm() { $('modal').classList.remove('on'); }
+
+  function saveForm() {
+    var name = $('fName').value.trim(), trade = $('fTrade').value.trim(), area = $('fArea').value.trim();
+    var intl = toIntl($('fPhone').value), problems = [];
+    if (!name) problems.push('اكتب الاسم.');
+    if (!trade) problems.push('اكتب الصنف أو التخصص.');
+    if (!area) problems.push('اكتب المنطقة.');
+    if (!intl) problems.push('الرقم مش مظبوط. اكتبه 11 رقم يبدأ بـ 01.');
+    if (!$('fOk').checked) problems.push('لازم تتأكد من موافقته على ظهور اسمه ورقمه.');
+    if (intl) {
+      var dup = data.filter(function (x) { return x.phone === intl && x.id !== editing; })[0];
+      if (dup) problems.push('الرقم ده متسجل قبل كده باسم: ' + dup.name);
+    }
+    if (problems.length) {
+      $('mErr').innerHTML = '';
+      var e = document.createElement('div'); e.className = 'err';
+      e.textContent = problems.join(' ');
+      $('mErr').appendChild(e);
+      return;
+    }
+    var rec = { id: editing || ('p' + Date.now().toString(36)), kind: $('fKind').value, name: name, trade: trade, area: area, phone: intl, phoneDisplay: toLocal(intl) };
+    if ($('fWa').checked) rec.whatsapp = intl;
+    if (editing) data = data.map(function (x) { return x.id === editing ? rec : x; });
+    else data.push(rec);
+    closeForm(); render(); updateBar();
+    say('اتحفظ. فاضل تدوس "نشر التعديلات" عشان يظهر للناس.');
+  }
+
+  function token() { return localStorage.getItem(tokKey) || ''; }
+  function keyState() {
+    $('keyState').textContent = token() ? 'المفتاح محفوظ على الموبايل ده.' : 'مفيش مفتاح محفوظ لسه.';
+  }
+  function api(path, opts) {
+    opts = opts || {};
+    opts.headers = Object.assign({ 'Accept': 'application/vnd.github+json', 'Authorization': 'Bearer ' + token() }, opts.headers || {});
+    return fetch('https://api.github.com/repos/' + REPO + path, opts);
+  }
+
+  function load() {
+    var url = FILE + '?t=' + Date.now();
+    return fetch(url, { cache: 'no-store' }).then(function (r) {
+      if (!r.ok) throw new Error('ماقدرتش أحمّل القايمة (' + r.status + ')');
+      return r.text();
+    }).then(function (t) {
+      published = serialize(parse(t));
+      var draft = null;
+      try { draft = JSON.parse(localStorage.getItem(draftKey) || 'null'); } catch (e) {}
+      if (draft && Array.isArray(draft) && serialize(draft) !== published) {
+        data = draft;
+        say('رجّعتلك تعديلاتك اللي لسه منشورتش.', 'warn');
+      } else data = parse(t);
+      render(); updateBar();
+    }).catch(function (e) { say('مشكلة في التحميل: ' + e.message + '. جرّب تحدّث الصفحة.', 'err'); $('status').textContent = 'مش قادر أحمّل'; });
+  }
+
+  function publish() {
+    if (!dirty()) return;
+    if (!token()) {
+      say('لازم تحط مفتاح النشر الأول. افتح تبويب "النشر". أو انسخ الملف وابعته لمساعدك.', 'warn');
+      tab('set'); return;
+    }
+    $('pubBtn').disabled = true; $('status').textContent = 'جاري النشر...';
+    var text = serialize(data);
+    api('/contents/' + FILE + '?ref=' + BRANCH).then(function (r) {
+      if (r.status === 401 || r.status === 403) throw new Error('KEY');
+      if (!r.ok) throw new Error('ماقدرتش أقرا الملف من GitHub (' + r.status + ')');
+      return r.json();
+    }).then(function (j) {
+      sha = j.sha;
+      return api('/contents/' + FILE, {
+        method: 'PUT',
+        body: JSON.stringify({ message: 'تحديث قايمة الصنايعية والمحلات من لوحة التحكم', content: b64enc(text), sha: sha, branch: BRANCH })
+      });
+    }).then(function (r) {
+      if (r.status === 401 || r.status === 403) throw new Error('KEY');
+      if (r.status === 409 || r.status === 422) throw new Error('الملف اتغيّر من مكان تاني. حدّث الصفحة وجرّب تاني.');
+      if (!r.ok) throw new Error('النشر فشل (' + r.status + ')');
+      published = text; updateBar();
+      say('اتنشر. هيظهر في الموقع والتطبيق بعد دقيقة تقريبًا.');
+    }).catch(function (e) {
+      updateBar();
+      if (e.message === 'KEY') say('المفتاح مش شغال أو خلصت صلاحيته. اعمل مفتاح جديد وحطه من تبويب "النشر".', 'err');
+      else say(e.message || 'حصلت مشكلة في النشر', 'err');
+    });
+  }
+
+  function saveToken() {
+    var t = $('tok').value.trim();
+    if (!t) { say('الصق المفتاح الأول.', 'err'); return; }
+    localStorage.setItem(tokKey, t); $('tok').value = '';
+    api('').then(function (r) { return r.json().then(function (j) { return { r: r, j: j }; }); }).then(function (x) {
+      if (x.r.ok && x.j.permissions && x.j.permissions.push) { say('المفتاح شغال. تقدر تنشر.'); }
+      else { localStorage.removeItem(tokKey); say('المفتاح ده مش مسموح له يعدّل في الموقع. اعمله من جديد بصلاحية Contents: Read and write على مستودع anjezny بس.', 'err'); }
+      keyState();
+    }).catch(function () { say('ماقدرتش أجرّب المفتاح. اتأكد من النت.', 'err'); keyState(); });
+  }
+
+  function tab(n) {
+    ['list', 'reqs', 'set'].forEach(function (k) {
+      $('tab-' + k).classList.toggle('hidden', k !== n);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === n); });
+    window.scrollTo(0, 0);
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (b) { b.onclick = function () { tab(b.getAttribute('data-tab')); }; });
+  $('addBtn').onclick = function () { openForm(''); };
+  $('goAdd').onclick = function () { tab('list'); openForm(''); };
+  $('mCancel').onclick = closeForm;
+  $('mSave').onclick = saveForm;
+  $('q').oninput = render;
+  $('pubBtn').onclick = publish;
+  $('saveTok').onclick = saveToken;
+  $('delTok').onclick = function () { localStorage.removeItem(tokKey); keyState(); say('اتمسح المفتاح من الموبايل ده.'); };
+  $('copyBtn').onclick = function () {
+    var t = serialize(data);
+    (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { say('اتنسخ. الصقه في الشات وابعته.'); }, function () { prompt('انسخ الملف من هنا:', t); });
+  };
+  $('shareBtn').onclick = function () {
+    var t = serialize(data);
+    if (navigator.share) navigator.share({ title: 'providers.js', text: t }).catch(function () {});
+    else $('copyBtn').click();
+  };
+  $('resetBtn').onclick = function () {
+    if (!dirty()) return;
+    if (confirm('تلغي كل التعديلات اللي منشورتش؟')) { localStorage.removeItem(draftKey); load(); say('رجعنا لآخر نسخة منشورة.'); }
+  };
+  window.addEventListener('beforeunload', function (e) { if (dirty()) { e.preventDefault(); e.returnValue = ''; } });
+
+  keyState();
+  load();
+})();
+</script>
+</body>
+</html>
