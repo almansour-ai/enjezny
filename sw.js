@@ -4,7 +4,7 @@ const SHELL = [
     './',
     'index.html',
     'privacy.html',
-    'style.css',
+    'style.css?v=9',
     'app.js',
     'providers.js',
     'hero.png',
