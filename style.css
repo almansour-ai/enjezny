@@ -41,6 +41,7 @@ body {
     display: block;
     width: min(320px, 70vw);
     height: auto;
+    margin-inline: auto;
 }
 
 .anj-fact {
