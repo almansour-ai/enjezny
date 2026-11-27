@@ -349,3 +349,46 @@ body {
 .anj-cat svg { width: 26px; height: 26px; flex: none; color: var(--teal); }
 .anj-cat.is-active { background: var(--teal); border-color: var(--teal); color: #fff; }
 .anj-cat.is-active svg { color: #fff; }
+
+/* التقييمات والمنتجات والأعمال السابقة */
+.anj-rate {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 14px;
+    color: var(--ink-2);
+}
+
+.anj-rate .stars, .anj-rev .stars { color: #e8a33d; letter-spacing: 1px; }
+
+.anj-rate-link { color: var(--teal); font-size: 13px; font-weight: 700; text-decoration: underline; }
+
+.anj-details { border-top: 1px dashed var(--hairline); padding-top: 8px; margin-top: 4px; }
+
+.anj-details summary { cursor: pointer; font-size: 14px; font-weight: 700; color: var(--ink-2); }
+
+.anj-rev { padding: 8px 0; border-bottom: 1px solid var(--hairline); font-size: 14px; }
+
+.anj-rev:last-child { border-bottom: 0; }
+
+.anj-rev-who { font-weight: 700; margin-inline-start: 8px; }
+
+.anj-rev-when { color: var(--ink-2); font-size: 12px; margin-inline-start: 8px; }
+
+.anj-prod-list { margin: 8px 0 2px; padding-inline-start: 20px; font-size: 14px; }
+
+.anj-works-label { font-size: 13px; font-weight: 700; color: var(--ink-2); margin-bottom: 4px; }
+
+.anj-works-grid { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.anj-works-grid img {
+    width: 72px;
+    height: 72px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid var(--hairline);
+    display: block;
+}
+
+.anj-btn-quote { border-color: #b45309; color: #b45309; }
