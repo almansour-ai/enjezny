@@ -48,6 +48,13 @@ label{display:block;font-weight:700;margin:12px 0 4px}
 .hidden{display:none!important}
 ol{padding-inline-start:22px;margin:6px 0}
 li{margin:6px 0}
+textarea{width:100%;min-height:110px;font:inherit;font-size:16px;border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:#fff;color:var(--ink)}
+textarea:focus{outline:2px solid var(--teal)}
+input[type=file]{width:100%;font:inherit;font-size:15px;margin:4px 0}
+.wprev{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.wp{position:relative;width:84px}
+.wp img{width:84px;height:84px;object-fit:cover;border-radius:10px;border:1px solid var(--line);display:block}
+.wp button{position:absolute;top:4px;inset-inline-start:4px;background:rgba(0,0,0,.65);color:#fff;border:0;border-radius:8px;font:inherit;font-size:12px;padding:2px 8px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -57,6 +64,7 @@ li{margin:6px 0}
   <div class="tabs">
     <button class="tab on" data-tab="list">الدليل</button>
     <button class="tab" data-tab="reqs">الطلبات</button>
+    <button class="tab" data-tab="revs">التقييمات</button>
     <button class="tab" data-tab="set">النشر</button>
   </div>
 
@@ -93,6 +101,27 @@ li{margin:6px 0}
       <p><button class="btn sm hidden" id="showHandled">أظهر اللي خلصته</button></p>
       <h2 style="margin-top:20px">لو حبيت تبص من Tally نفسه</h2>
       <p><a class="btn wide" href="https://tally.so/forms/OQ7gNA/submissions" target="_blank" rel="noopener">افتح الردود على Tally</a></p>
+    </div>
+  </section>
+
+  <!-- التقييمات -->
+  <section id="tab-revs" class="hidden">
+    <h2>تقييمات الناس</h2>
+    <div class="note">أي حد يدوس "قيّمه" على الموقع ويكتب رأيه، التقييم يوصل هنا الأول. مش هيظهر للناس غير بعد ما توافق عليه وتدوس نشر.</div>
+    <div id="revNoKey" class="note hidden">حط مفتاح Tally من تبويب "الطلبات" الأول، وبعدين ارجع هنا.</div>
+    <div id="revListBox" class="hidden">
+      <div class="row" style="align-items:center;flex-wrap:nowrap">
+        <p class="meta" id="revCount" style="flex:1;margin:0"></p>
+        <button class="btn sm" id="revReload">تحديث</button>
+      </div>
+      <div id="revCards"></div>
+      <p class="meta" id="revHandledInfo"></p>
+      <p><button class="btn sm hidden" id="showHandledRev">أظهر اللي خلصته</button></p>
+      <h2 style="margin-top:20px">التقييمات المتسجلة عندك</h2>
+      <p class="meta" id="revPubInfo"></p>
+      <div id="revPubCards"></div>
+      <h2 style="margin-top:20px">لو حبيت تبص من Tally نفسه</h2>
+      <p><a class="btn wide" href="https://tally.so/forms/WJzlAk/submissions" target="_blank" rel="noopener">افتح ردود التقييمات على Tally</a></p>
     </div>
   </section>
 
@@ -148,6 +177,17 @@ li{margin:6px 0}
     <label for="fPhone">رقم التليفون</label>
     <input type="tel" id="fPhone" inputmode="tel" dir="ltr" placeholder="01012345678">
     <label class="chk"><input type="checkbox" id="fWa" checked><span>الرقم عليه واتساب</span></label>
+    <div id="mProductsBox" class="hidden">
+      <label for="fProducts">المنتجات اللي بيبيعها (كل منتج في سطر)</label>
+      <textarea id="fProducts" rows="4" placeholder="مثال:&#10;أسمنت مسلح&#10;حديد&#10;رمل وطوب"></textarea>
+    </div>
+    <label class="chk hidden" id="mQuoteBox"><input type="checkbox" id="fQuote"><span>يظهر للناس زرار "اطلب مقايسة" يكلمهم على واتساب</span></label>
+    <div id="mWorksBox" class="hidden">
+      <label for="fWorks">صور من شغله (أعمال سابقة)</label>
+      <input type="file" id="fWorks" accept="image/*" multiple>
+      <div class="note" style="margin-top:6px">الصور بتتصغّر لوحدها عشان الموقع يفضل سريع. ولازم مفتاح النشر يكون محفوظ عشان تترفع مع الحفظ.</div>
+      <div id="fWorksPrev" class="wprev"></div>
+    </div>
     <label class="chk"><input type="checkbox" id="fOk"><span>اتأكدت إنه وافق على ظهور اسمه ورقمه في الدليل</span></label>
     <div class="row" style="margin-top:14px">
       <button class="btn main" id="mSave" style="flex:1">حفظ</button>
@@ -160,10 +200,16 @@ li{margin:6px 0}
 (function () {
   'use strict';
   var REPO = 'almansour-ai/enjezny', BRANCH = 'main', FILE = 'providers.js';
+  var REVIEWS_FILE = 'reviews.js', REVIEW_FORM = 'WJzlAk';
   var HEADER = [
     '// قايمة الصنايعية والمحلات اللي بتظهر في دليل إنجزني.',
     '// الملف ده بتكتبه لوحة التحكم (admin.html). لو عدّلته بإيدك خلّي الشكل زي ما هو.',
     '// phone و whatsapp: الرقم بالصيغة الدولية من غير علامة +.'
+  ].join('\n');
+  var RHEADER = [
+    '// تقييمات الناس على الصنايعية والمحلات والشركات في دليل إنجزني.',
+    '// الملف ده بتكتبه لوحة التحكم (admin.html) بعد موافقة صاحب الموقع على كل تقييم. لو عدّلته بإيدك خلّي الشكل زي ما هو.',
+    '// p: رقم الصنايعي أو المحل (نفس id بتاعه في providers.js) · s: النجوم من 5 · c: الرأي · n: الاسم (اختياري) · d: تاريخ التقييم'
   ].join('\n');
   var $ = function (id) { return document.getElementById(id); };
   var data = [];          // الشغل الحالي
@@ -171,6 +217,11 @@ li{margin:6px 0}
   var sha = null;
   var editing = null;     // id أو '' للجديد
   var tokKey = 'anj_gh_token', draftKey = 'anj_admin_draft';
+  var revsData = [];       // التقييمات المعتمدة الحالية
+  var revsPublished = '';  // آخر نص منشور للتقييمات (للمقارنة)
+  var revsCache = [], showDoneRev = false;
+  var revHandledStore = 'anj_revs_handled';
+  var pendingWorks = [], removedWorks = [];
 
   function norm(s) { return (s || '').toLowerCase().replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').trim(); }
   function digits(s) {
@@ -198,6 +249,16 @@ li{margin:6px 0}
     if (!Array.isArray(arr)) throw new Error('شكل ملف القايمة مش مفهوم');
     return arr;
   }
+  function serializeReviews(list) {
+    var body = list.map(function (r) { return '  ' + JSON.stringify(r) + ','; }).join('\n');
+    return RHEADER + '\nconst REVIEWS = [\n' + body + (body ? '\n' : '') + '];\n';
+  }
+  function parseReviews(text) {
+    var m = text.match(/const\s+REVIEWS\s*=\s*(\[[\s\S]*\])\s*;?\s*$/);
+    if (!m) return [];
+    var arr = (new Function('return ' + m[1]))();
+    return Array.isArray(arr) ? arr : [];
+  }
   function b64enc(str) {
     var bytes = new TextEncoder().encode(str), s = '';
     for (var i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
@@ -220,14 +281,14 @@ li{margin:6px 0}
     window.scrollTo(0, 0);
   }
 
-  function dirty() { return serialize(data) !== published; }
+  function dirty() { return serialize(data) !== published || serializeReviews(revsData) !== revsPublished; }
   function updateBar() {
     var d = dirty();
     $('pubBtn').disabled = !d;
     $('pubBtn').style.opacity = d ? 1 : .5;
     $('status').textContent = d ? 'في تعديلات لسه منشورتش على الموقع' : 'كل حاجة منشورة. الموقع زي ما هو هنا.';
     $('draftInfo').textContent = d ? 'عندك تعديلات محفوظة على الموبايل ولسه منشورتش.' : 'مفيش تعديلات معلّقة.';
-    if (d) localStorage.setItem(draftKey, JSON.stringify(data)); else localStorage.removeItem(draftKey);
+    if (d) { try { localStorage.setItem(draftKey, JSON.stringify({ p: data, r: revsData })); } catch (e) {} } else localStorage.removeItem(draftKey);
   }
 
   function render() {
@@ -279,7 +340,19 @@ li{margin:6px 0}
     $('fPhone').value = p ? p.phoneDisplay : '';
     $('fWa').checked = p ? !!p.whatsapp : true;
     $('fOk').checked = !!p;
+    $('fProducts').value = p && p.products ? p.products.join('\n') : '';
+    $('fQuote').checked = p ? !!p.quote : false;
+    $('fWorks').value = '';
+    pendingWorks = []; removedWorks = [];
+    updateKindUI();
+    renderWorksPrev(p);
     $('modal').classList.add('on');
+  }
+  function updateKindUI() {
+    var k = $('fKind').value;
+    $('mProductsBox').classList.toggle('hidden', k !== 'محل');
+    $('mQuoteBox').classList.toggle('hidden', k.indexOf('شركة') !== 0);
+    $('mWorksBox').classList.toggle('hidden', k !== 'صنايعي');
   }
   function closeForm() { $('modal').classList.remove('on'); }
 
@@ -302,13 +375,53 @@ li{margin:6px 0}
       $('mErr').appendChild(e);
       return;
     }
-    var rec = { id: editing || ('p' + Date.now().toString(36)), kind: $('fKind').value, name: name, trade: trade, area: area, phone: intl, phoneDisplay: toLocal(intl) };
+    var kind = $('fKind').value;
+    var old = editing ? data.filter(function (x) { return x.id === editing; })[0] : null;
+    var rec = { id: editing || ('p' + Date.now().toString(36)), kind: kind, name: name, trade: trade, area: area, phone: intl, phoneDisplay: toLocal(intl) };
     if ($('fWa').checked) rec.whatsapp = intl;
-    if (editing) data = data.map(function (x) { return x.id === editing ? rec : x; });
-    else data.push(rec);
-    closeForm(); render(); updateBar();
-    if (pendingReq) { setHandled(pendingReq, 'approved'); pendingReq = null; renderReqs(); }
-    say('اتحفظ. فاضل تدوس "نشر التعديلات" عشان يظهر للناس.');
+    if (kind === 'محل') {
+      var prods = $('fProducts').value.split('\n').map(function (x) { return x.trim(); }).filter(function (x) { return x; });
+      if (prods.length) rec.products = prods;
+    }
+    if (kind.indexOf('شركة') === 0 && $('fQuote').checked) rec.quote = true;
+    var keepWorks = (kind === 'صنايعي' && old && old.works)
+      ? old.works.filter(function (w) { return removedWorks.indexOf(w) === -1; }) : [];
+
+    var finish = function (newPaths) {
+      if (kind === 'صنايعي') {
+        var all = keepWorks.concat(newPaths);
+        if (all.length) rec.works = all;
+      }
+      if (editing) data = data.map(function (x) { return x.id === editing ? rec : x; });
+      else data.push(rec);
+      pendingWorks = []; removedWorks = [];
+      closeForm(); render(); updateBar();
+      if (pendingReq) { setHandled(pendingReq, 'approved'); pendingReq = null; renderReqs(); }
+      say('اتحفظ. فاضل تدوس "نشر التعديلات" عشان يظهر للناس.');
+    };
+
+    if (kind === 'صنايعي' && pendingWorks.length) {
+      if (!token()) {
+        say('الصور محتاجة مفتاح النشر عشان تترفع. حط المفتاح من تبويب "النشر" وبعدين دوس حفظ تاني.', 'warn');
+        return;
+      }
+      $('mSave').disabled = true;
+      $('mErr').innerHTML = '';
+      var w = document.createElement('div'); w.className = 'note'; w.textContent = 'جاري رفع الصور... استنى لما تخلص.';
+      $('mErr').appendChild(w);
+      uploadWorks(rec.id, pendingWorks).then(function (paths) {
+        $('mSave').disabled = false;
+        finish(paths);
+      }).catch(function (err) {
+        $('mSave').disabled = false;
+        $('mErr').innerHTML = '';
+        var e2 = document.createElement('div'); e2.className = 'err';
+        e2.textContent = err.message === 'KEY' ? 'مفتاح النشر مش شغال. جدّده من تبويب "النشر" وجرّب تاني.' : (err.message || 'حصلت مشكلة في رفع الصور. جرّب تاني.');
+        $('mErr').appendChild(e2);
+      });
+      return;
+    }
+    finish([]);
   }
 
   function token() { return localStorage.getItem(tokKey) || ''; }
@@ -322,20 +435,45 @@ li{margin:6px 0}
   }
 
   function load() {
-    var url = FILE + '?t=' + Date.now();
-    return fetch(url, { cache: 'no-store' }).then(function (r) {
-      if (!r.ok) throw new Error('ماقدرتش أحمّل القايمة (' + r.status + ')');
-      return r.text();
-    }).then(function (t) {
-      published = serialize(parse(t));
+    var up = FILE + '?t=' + Date.now(), ur = REVIEWS_FILE + '?t=' + Date.now();
+    return Promise.all([
+      fetch(up, { cache: 'no-store' }).then(function (r) {
+        if (!r.ok) throw new Error('ماقدرتش أحمّل القايمة (' + r.status + ')');
+        return r.text();
+      }),
+      fetch(ur, { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; })
+    ]).then(function (both) {
+      published = serialize(parse(both[0]));
+      var liveRevs = both[1] ? parseReviews(both[1]) : [];
+      revsPublished = serializeReviews(liveRevs);
       var draft = null;
       try { draft = JSON.parse(localStorage.getItem(draftKey) || 'null'); } catch (e) {}
-      if (draft && Array.isArray(draft) && serialize(draft) !== published) {
-        data = draft;
-        say('رجّعتلك تعديلاتك اللي لسه منشورتش.', 'warn');
-      } else data = parse(t);
+      var dp = draft ? (Array.isArray(draft) ? draft : draft.p) : null;
+      var dr = draft && !Array.isArray(draft) ? draft.r : null;
+      var hasDraft = (dp && serialize(dp) !== published) || (dr && serializeReviews(dr) !== revsPublished);
+      data = (dp && serialize(dp) !== published) ? dp : parse(both[0]);
+      revsData = (dr && serializeReviews(dr) !== revsPublished) ? dr : liveRevs;
+      if (hasDraft) say('رجّعتلك تعديلاتك اللي لسه منشورتش.', 'warn');
       render(); updateBar();
     }).catch(function (e) { say('مشكلة في التحميل: ' + e.message + '. جرّب تحدّث الصفحة.', 'err'); $('status').textContent = 'مش قادر أحمّل'; });
+  }
+
+  function putFile(path, text, needed, msg) {
+    if (!needed) return Promise.resolve();
+    return api('/contents/' + path + '?ref=' + BRANCH).then(function (r) {
+      if (r.status === 401 || r.status === 403) throw new Error('KEY');
+      if (r.status === 404) return null;
+      if (!r.ok) throw new Error('ماقدرتش أقرا الملف من GitHub (' + r.status + ')');
+      return r.json();
+    }).then(function (j) {
+      var body = { message: msg, content: b64enc(text), branch: BRANCH };
+      if (j && j.sha) body.sha = j.sha;
+      return api('/contents/' + path, { method: 'PUT', body: JSON.stringify(body) });
+    }).then(function (r) {
+      if (r.status === 401 || r.status === 403) throw new Error('KEY');
+      if (r.status === 409 || r.status === 422) throw new Error('الملف اتغيّر من مكان تاني. حدّث الصفحة وجرّب تاني.');
+      if (!r.ok) throw new Error('النشر فشل (' + r.status + ')');
+    });
   }
 
   function publish() {
@@ -345,22 +483,12 @@ li{margin:6px 0}
       tab('set'); return;
     }
     $('pubBtn').disabled = true; $('status').textContent = 'جاري النشر...';
-    var text = serialize(data);
-    api('/contents/' + FILE + '?ref=' + BRANCH).then(function (r) {
-      if (r.status === 401 || r.status === 403) throw new Error('KEY');
-      if (!r.ok) throw new Error('ماقدرتش أقرا الملف من GitHub (' + r.status + ')');
-      return r.json();
-    }).then(function (j) {
-      sha = j.sha;
-      return api('/contents/' + FILE, {
-        method: 'PUT',
-        body: JSON.stringify({ message: 'تحديث قايمة الصنايعية والمحلات من لوحة التحكم', content: b64enc(text), sha: sha, branch: BRANCH })
-      });
-    }).then(function (r) {
-      if (r.status === 401 || r.status === 403) throw new Error('KEY');
-      if (r.status === 409 || r.status === 422) throw new Error('الملف اتغيّر من مكان تاني. حدّث الصفحة وجرّب تاني.');
-      if (!r.ok) throw new Error('النشر فشل (' + r.status + ')');
-      published = text; updateBar();
+    var ptext = serialize(data), rtext = serializeReviews(revsData);
+    putFile(FILE, ptext, ptext !== published, 'تحديث قايمة الصنايعية والمحلات من لوحة التحكم').then(function () {
+      published = ptext;
+      return putFile(REVIEWS_FILE, rtext, rtext !== revsPublished, 'تحديث تقييمات الدليل من لوحة التحكم');
+    }).then(function () {
+      revsPublished = rtext; updateBar();
       say('اتنشر. هيظهر في الموقع والتطبيق بعد دقيقة تقريبًا.');
     }).catch(function (e) {
       updateBar();
@@ -540,6 +668,12 @@ li{margin:6px 0}
     $('fPhone').value = s.phoneRaw;
     $('fWa').checked = s.wa;
     $('fOk').checked = s.ok;
+    $('fProducts').value = s.price || '';
+    $('fQuote').checked = false;
+    $('fWorks').value = '';
+    pendingWorks = []; removedWorks = [];
+    updateKindUI();
+    renderWorksPrev(null);
     $('modal').classList.add('on');
   }
 
@@ -578,12 +712,228 @@ li{margin:6px 0}
   }
   /* ===== نهاية جزء الطلبات ===== */
 
+  /* ===== التقييمات (فورم Tally بتاع الآراء) ===== */
+  function rqmap(questions) {
+    var m = {};
+    questions.forEach(function (q) {
+      if (q.type === 'RATING') m.rating = q.id;
+      else if (q.type === 'TEXTAREA') m.comment = q.id;
+      else if (q.type === 'INPUT_TEXT') m.name = q.id;
+      else if (q.type === 'HIDDEN_FIELDS') m.provider = q.id;
+    });
+    return m;
+  }
+  function parseRevSub(sub, qm) {
+    var raw = ans(sub, qm.provider), pid = '';
+    if (raw && typeof raw === 'object') pid = raw.provider || '';
+    else pid = (raw || '').toString().trim();
+    return {
+      id: sub.id,
+      when: sub.submittedAt,
+      provider: pid,
+      stars: parseInt(ans(sub, qm.rating), 10) || 0,
+      comment: (ans(sub, qm.comment) || '').toString().trim(),
+      name: (ans(sub, qm.name) || '').toString().trim()
+    };
+  }
+  function revHandled() { try { return JSON.parse(localStorage.getItem(revHandledStore) || '{}'); } catch (e) { return {}; } }
+  function setRevHandled(id, v) { var h = revHandled(); h[id] = v; localStorage.setItem(revHandledStore, JSON.stringify(h)); }
+  function unRevHandled(id) { var h = revHandled(); delete h[id]; localStorage.setItem(revHandledStore, JSON.stringify(h)); }
+  function provById(id) { return data.filter(function (x) { return x.id === id; })[0]; }
+  function starLine(n) { var s = ''; for (var i = 1; i <= 5; i++) s += i <= Math.round(n) ? '\u2605' : '\u2606'; return s; }
+
+  function revCard(s, isDone) {
+    var c = document.createElement('div'); c.className = 'card';
+    if (isDone) c.style.opacity = '.55';
+    var prov = provById(s.provider);
+    var t = document.createElement('div');
+    var b = document.createElement('b'); b.textContent = starLine(s.stars) + ' (' + s.stars + ' من 5)';
+    t.appendChild(b);
+    c.appendChild(t);
+    var on = document.createElement('div'); on.className = 'meta';
+    on.textContent = 'عن: ' + (prov ? prov.name + ' (' + prov.trade + ')' : 'صاحب التقييم ده مش موجود في الدليل');
+    c.appendChild(on);
+    if (s.comment) { var cm = document.createElement('div'); cm.textContent = '"' + s.comment + '"'; c.appendChild(cm); }
+    var who = document.createElement('div'); who.className = 'meta';
+    who.textContent = (s.name ? 'من: ' + s.name + ' \u00b7 ' : '') + fmtWhen(s.when);
+    c.appendChild(who);
+    var r = document.createElement('div'); r.className = 'row'; r.style.marginTop = '8px';
+    if (isDone) {
+      var rb = document.createElement('button'); rb.className = 'btn sm'; rb.textContent = 'رجّعه للجديدة';
+      rb.onclick = function () { unRevHandled(s.id); renderRevs(); };
+      r.appendChild(rb);
+    } else {
+      var ab = document.createElement('button'); ab.className = 'btn sm main'; ab.textContent = 'موافقة ينشر';
+      if (!prov) { ab.disabled = true; ab.style.opacity = .5; }
+      ab.onclick = function () { approveRev(s.id); };
+      var db = document.createElement('button'); db.className = 'btn sm red'; db.textContent = 'تجاهل';
+      db.onclick = function () {
+        if (confirm('تتجاهل التقييم ده؟ مش هيتحذف من Tally، بس هيختفي من القايمة دي.')) {
+          setRevHandled(s.id, 'rejected'); renderRevs();
+        }
+      };
+      r.appendChild(ab); r.appendChild(db);
+    }
+    c.appendChild(r);
+    return c;
+  }
+
+  function renderRevs() {
+    var h = revHandled();
+    var pend = revsCache.filter(function (s) { return !h[s.id]; });
+    var done = revsCache.filter(function (s) { return h[s.id]; });
+    $('revCount').textContent = pend.length ? ('عندك ' + pend.length + ' تقييم جديد') : 'مفيش تقييمات جديدة';
+    var box = $('revCards'); box.innerHTML = '';
+    if (!pend.length) {
+      var e = document.createElement('div'); e.className = 'note';
+      e.textContent = 'أي حد يقيّم من لينك "قيّمه" على الموقع، التقييم يظهر هنا من غير ما تفتح Tally. دوس "تحديث" كل ما تفتح الصفحة.';
+      box.appendChild(e);
+    }
+    pend.forEach(function (s) { box.appendChild(revCard(s, false)); });
+    if (showDoneRev) done.forEach(function (s) { box.appendChild(revCard(s, true)); });
+    $('revHandledInfo').textContent = done.length ? ('خلصت ' + done.length + ' تقييم قبل كده (مخفيين).') : '';
+    var sh = $('showHandledRev');
+    sh.classList.toggle('hidden', !done.length);
+    sh.textContent = showDoneRev ? 'خبّي اللي خلصته' : 'أظهر اللي خلصته';
+    renderPubRevs();
+  }
+
+  function renderPubRevs() {
+    $('revPubInfo').textContent = revsData.length
+      ? ('عندك ' + revsData.length + ' تقييم متسجل. لو مسحت واحد لازم تنشر عشان يختفي من الموقع.')
+      : 'لسه مفيش تقييمات متسجلة.';
+    var box = $('revPubCards'); box.innerHTML = '';
+    revsData.forEach(function (rev, i) {
+      var c = document.createElement('div'); c.className = 'card';
+      var prov = provById(rev.p);
+      var t = document.createElement('div');
+      var b = document.createElement('b'); b.textContent = starLine(rev.s || 0);
+      t.appendChild(b);
+      var m = document.createElement('span'); m.className = 'meta';
+      m.textContent = ' عن: ' + (prov ? prov.name : '(اتمسح من الدليل)');
+      t.appendChild(m);
+      c.appendChild(t);
+      if (rev.c) { var cm = document.createElement('div'); cm.className = 'meta'; cm.textContent = '"' + rev.c + '"' + (rev.n ? ' - ' + rev.n : ''); c.appendChild(cm); }
+      var r = document.createElement('div'); r.className = 'row'; r.style.marginTop = '8px';
+      var db = document.createElement('button'); db.className = 'btn sm red'; db.textContent = 'مسح';
+      db.onclick = function () {
+        if (confirm('تمسح التقييم ده من الموقع؟ هيختفي بعد ما تنشر.')) { revsData.splice(i, 1); renderRevs(); updateBar(); }
+      };
+      r.appendChild(db);
+      c.appendChild(r);
+      box.appendChild(c);
+    });
+  }
+
+  function approveRev(sid) {
+    var s = revsCache.filter(function (x) { return x.id === sid; })[0];
+    if (!s || !provById(s.provider)) return;
+    var rev = { p: s.provider, s: s.stars, d: (s.when || '').slice(0, 10) };
+    if (s.comment) rev.c = s.comment;
+    if (s.name) rev.n = s.name;
+    revsData.push(rev);
+    setRevHandled(sid, 'approved');
+    renderRevs(); updateBar();
+    say('اتسجل التقييم. فاضل تدوس "نشر التعديلات" عشان يظهر للناس.');
+  }
+
+  function loadRevs() {
+    if (!tkey()) {
+      $('revNoKey').classList.remove('hidden');
+      $('revListBox').classList.add('hidden');
+      renderPubRevs();
+      return;
+    }
+    $('revNoKey').classList.add('hidden');
+    $('revListBox').classList.remove('hidden');
+    $('revCards').innerHTML = '';
+    $('revCount').textContent = 'جاري تحميل التقييمات...';
+    fetch('https://api.tally.so/forms/' + REVIEW_FORM + '/submissions?filter=completed&limit=200', {
+      headers: { 'Authorization': 'Bearer ' + tkey() }
+    }).then(function (r) {
+      if (r.status === 401 || r.status === 403) throw new Error('KEY');
+      if (!r.ok) throw new Error('ماقدرتش أجيب التقييمات (' + r.status + ')');
+      return r.json();
+    }).then(function (j) {
+      var qm = rqmap(j.questions || []);
+      revsCache = (j.submissions || []).map(function (sub) { return parseRevSub(sub, qm); })
+        .sort(function (a, b) { return a.when < b.when ? 1 : -1; });
+      renderRevs();
+    }).catch(function (e) {
+      $('revCount').textContent = '';
+      if (e.message === 'KEY') say('مفتاح Tally مش شغال أو اتلغى. امسحه من تبويب "الطلبات" وحط مفتاح جديد.', 'err');
+      else say(e.message || 'حصلت مشكلة في تحميل التقييمات. جرّب "تحديث".', 'err');
+      renderPubRevs();
+    });
+  }
+  /* ===== نهاية جزء التقييمات ===== */
+
+  /* ===== صور الأعمال السابقة ===== */
+  function compressImage(file) {
+    return new Promise(function (res, rej) {
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function () {
+        URL.revokeObjectURL(url);
+        var max = 1200, scale = Math.min(1, max / Math.max(img.width, img.height));
+        var cw = Math.max(1, Math.round(img.width * scale)), ch = Math.max(1, Math.round(img.height * scale));
+        var cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+        cv.getContext('2d').drawImage(img, 0, 0, cw, ch);
+        res(cv.toDataURL('image/jpeg', 0.8));
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); rej(new Error('الصورة مش سليمة')); };
+      img.src = url;
+    });
+  }
+
+  function renderWorksPrev(p) {
+    var box = $('fWorksPrev');
+    if (!box) return;
+    box.innerHTML = '';
+    if (p && p.works) p.works.forEach(function (w) {
+      if (removedWorks.indexOf(w) !== -1) return;
+      var d = document.createElement('div'); d.className = 'wp';
+      var im = document.createElement('img'); im.src = w; im.alt = '';
+      var x = document.createElement('button'); x.type = 'button'; x.textContent = 'شيل';
+      x.onclick = function () { removedWorks.push(w); renderWorksPrev(p); };
+      d.appendChild(im); d.appendChild(x); box.appendChild(d);
+    });
+    pendingWorks.forEach(function (f, i) {
+      var d = document.createElement('div'); d.className = 'wp';
+      var im = document.createElement('img'); im.src = f.dataUrl; im.alt = '';
+      var x = document.createElement('button'); x.type = 'button'; x.textContent = 'شيل';
+      x.onclick = function () { pendingWorks.splice(i, 1); renderWorksPrev(p); };
+      d.appendChild(im); d.appendChild(x); box.appendChild(d);
+    });
+  }
+
+  function uploadWorks(pid, files) {
+    var paths = [];
+    var seq = Promise.resolve();
+    files.forEach(function (f, i) {
+      seq = seq.then(function () {
+        var path = 'works/' + pid + '/' + Date.now().toString(36) + i + '.jpg';
+        return api('/contents/' + path, {
+          method: 'PUT',
+          body: JSON.stringify({ message: 'صورة من شغل صنايعي في الدليل', content: f.dataUrl.split(',')[1], branch: BRANCH })
+        }).then(function (r) {
+          if (r.status === 401 || r.status === 403) throw new Error('KEY');
+          if (!r.ok) throw new Error('رفع صورة فشل (' + r.status + ')');
+          paths.push(path);
+        });
+      });
+    });
+    return seq.then(function () { return paths; });
+  }
+  /* ===== نهاية جزء الصور ===== */
+
   function tab(n) {
-    ['list', 'reqs', 'set'].forEach(function (k) {
+    ['list', 'reqs', 'revs', 'set'].forEach(function (k) {
       $('tab-' + k).classList.toggle('hidden', k !== n);
     });
     Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === n); });
     if (n === 'reqs') loadReqs();
+    if (n === 'revs') loadRevs();
     window.scrollTo(0, 0);
   }
 
@@ -595,17 +945,39 @@ li{margin:6px 0}
   $('saveTkey').onclick = saveTkey;
   $('delTkey').onclick = function () { localStorage.removeItem(tKeyStore); reqKeyUI(); say('اتمسح مفتاح Tally من الموبايل ده.'); };
   $('reqReload').onclick = loadReqs;
+  $('revReload').onclick = loadRevs;
+  $('showHandledRev').onclick = function () { showDoneRev = !showDoneRev; renderRevs(); };
+  $('fKind').onchange = updateKindUI;
+  $('fWorks').onchange = function () {
+    var files = Array.prototype.slice.call($('fWorks').files || []);
+    $('fWorks').value = '';
+    if (!files.length) return;
+    var p = editing ? data.filter(function (x) { return x.id === editing; })[0] : null;
+    files.forEach(function (f) {
+      compressImage(f).then(function (dataUrl) {
+        pendingWorks.push({ dataUrl: dataUrl });
+        renderWorksPrev(p);
+      }).catch(function () { say('في صورة ماقدرتش أقراها. جرّب صورة غيرها.', 'err'); });
+    });
+  };
   $('showHandled').onclick = function () { showDone = !showDone; renderReqs(); };
   $('pubBtn').onclick = publish;
   $('saveTok').onclick = saveToken;
   $('delTok').onclick = function () { localStorage.removeItem(tokKey); keyState(); say('اتمسح المفتاح من الموبايل ده.'); };
-  $('copyBtn').onclick = function () {
+  function combinedText() {
     var t = serialize(data);
+    if (serializeReviews(revsData) !== revsPublished) {
+      t += '\n/* ===== تحت ده ملف reviews.js لوحده، يتحط في ملف منفصل بنفس الاسم ===== */\n' + serializeReviews(revsData);
+    }
+    return t;
+  }
+  $('copyBtn').onclick = function () {
+    var t = combinedText();
     (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { say('اتنسخ. الصقه في الشات وابعته.'); }, function () { prompt('انسخ الملف من هنا:', t); });
   };
   $('shareBtn').onclick = function () {
-    var t = serialize(data);
-    if (navigator.share) navigator.share({ title: 'providers.js', text: t }).catch(function () {});
+    var t = combinedText();
+    if (navigator.share) navigator.share({ title: 'anjezny-files', text: t }).catch(function () {});
     else $('copyBtn').click();
   };
   $('resetBtn').onclick = function () {
