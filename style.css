@@ -337,3 +337,15 @@ body {
 .anj-rights { margin: 10px 0 0; font-size: 12px; text-align: center; }
 
 .anj-credit { margin-top: 26px; }
+
+.anj-cats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 12px; }
+.anj-cat {
+    display: flex; align-items: center; gap: 10px;
+    min-height: 52px; padding: 8px 12px;
+    font: inherit; font-size: 15px; font-weight: 600; text-align: start;
+    border: 1px solid var(--hairline); border-radius: 12px;
+    background: #fff; color: var(--ink); cursor: pointer;
+}
+.anj-cat svg { width: 26px; height: 26px; flex: none; color: var(--teal); }
+.anj-cat.is-active { background: var(--teal); border-color: var(--teal); color: #fff; }
+.anj-cat.is-active svg { color: #fff; }
