@@ -1,12 +1,13 @@
 // إنجزني service worker: كاش بسيط عشان التطبيق يفتح بسرعة ويشتغل لو النت ضعيف.
-const CACHE = 'anjezny-v37';
+const CACHE = 'anjezny-v38';
 const SHELL = [
     './',
     'index.html',
     'privacy.html',
-    'style.css?v=19',
+    'style.css?v=20',
     'app.js',
     'providers.js',
+    'reviews.js',
     'hero.jpg',
     'logo-header.png',
     'founder-v7.jpg',
@@ -57,7 +58,7 @@ self.addEventListener('fetch', (event) => {
     }
 
     // قايمة الصنايعية: الشبكة أولاً عشان أي تحديث يظهر فورًا، والكاش احتياطي لو النت قطع
-    if (url.pathname.endsWith('providers.js')) {
+    if (url.pathname.endsWith('providers.js') || url.pathname.endsWith('reviews.js')) {
         event.respondWith(
             fetch(req)
                 .then((res) => {
