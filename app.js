@@ -1,4 +1,4 @@
-// دليل إنجزني: بحث وفلترة بالصنف، وبطاقات فيها اتصال وواتساب.
+// دليل إنجزني: بحث وفلترة بالصنف، وبطاقات فيها اتصال وواتساب وتقييمات وأعمال سابقة.
 (function () {
     'use strict';
 
@@ -9,6 +9,9 @@
             .replace(/ى/g, 'ي')
             .trim();
     };
+
+    var REVIEW_FORM_URL = 'https://tally.so/r/WJzlAk';
+    var ALL_REVIEWS = (typeof REVIEWS !== 'undefined' && Array.isArray(REVIEWS)) ? REVIEWS : [];
 
     var CATS = [
         { id: 'all', label: 'الكل', kinds: null, icon: '<path d="M4 4h7v7H4z"/><path d="M13 4h7v7h-7z"/><path d="M4 13h7v7H4z"/><path d="M13 13h7v7h-7z"/>' },
@@ -21,6 +24,22 @@
     var state = { query: '', trade: 'الكل', cat: 'all' };
 
     function catById(id) { return CATS.filter(function (c) { return c.id === id; })[0]; }
+
+    function reviewsFor(id) {
+        return ALL_REVIEWS.filter(function (r) { return r.p === id; });
+    }
+
+    function starsText(n) {
+        n = Math.round(n);
+        var s = '';
+        for (var i = 1; i <= 5; i++) s += i <= n ? '★' : '☆';
+        return s;
+    }
+
+    function fmtDate(iso) {
+        try { return new Date(iso).toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' }); }
+        catch (e) { return ''; }
+    }
 
     function renderCats() {
         var box = document.getElementById('anj-cats');
@@ -114,6 +133,27 @@
             phone.dir = 'ltr';
             phone.textContent = p.phoneDisplay;
 
+            var revs = reviewsFor(p.id);
+            var rate = document.createElement('div');
+            rate.className = 'anj-rate';
+            if (revs.length) {
+                var avg = revs.reduce(function (s, r) { return s + (r.s || 0); }, 0) / revs.length;
+                var st = document.createElement('span');
+                st.className = 'stars';
+                st.textContent = starsText(avg);
+                rate.appendChild(st);
+                var rt = document.createElement('span');
+                rt.textContent = (Math.round(avg * 10) / 10) + ' من 5 · ' + revs.length + (revs.length === 1 ? ' تقييم' : ' تقييمات');
+                rate.appendChild(rt);
+            }
+            var rl = document.createElement('a');
+            rl.className = 'anj-rate-link';
+            rl.href = REVIEW_FORM_URL + '?provider=' + encodeURIComponent(p.id);
+            rl.target = '_blank';
+            rl.rel = 'noopener';
+            rl.textContent = revs.length ? 'قيّمه إنت كمان' : 'قيّمه';
+            rate.appendChild(rl);
+
             var actions = document.createElement('div');
             actions.className = 'anj-card-actions';
 
@@ -131,11 +171,100 @@
                 wa.rel = 'noopener';
                 wa.textContent = 'واتساب';
                 actions.appendChild(wa);
+
+                if (p.quote) {
+                    var qb = document.createElement('a');
+                    qb.className = 'anj-btn anj-btn-quote';
+                    qb.href = 'https://wa.me/' + p.whatsapp + '?text=' + encodeURIComponent('السلام عليكم، شفتكم على دليل أنجزني وحابب أطلب مقايسة من فضلكم');
+                    qb.target = '_blank';
+                    qb.rel = 'noopener';
+                    qb.textContent = 'اطلب مقايسة';
+                    actions.appendChild(qb);
+                }
             }
 
             card.appendChild(top);
             card.appendChild(phone);
+            card.appendChild(rate);
             card.appendChild(actions);
+
+            if (p.products && p.products.length) {
+                var pd = document.createElement('details');
+                pd.className = 'anj-details';
+                var ps = document.createElement('summary');
+                ps.textContent = 'المنتجات اللي بيبيعها (' + p.products.length + ')';
+                pd.appendChild(ps);
+                var ul = document.createElement('ul');
+                ul.className = 'anj-prod-list';
+                p.products.forEach(function (prod) {
+                    var li = document.createElement('li');
+                    li.textContent = prod;
+                    ul.appendChild(li);
+                });
+                pd.appendChild(ul);
+                card.appendChild(pd);
+            }
+
+            if (p.works && p.works.length) {
+                var w = document.createElement('div');
+                w.className = 'anj-works';
+                var wl = document.createElement('div');
+                wl.className = 'anj-works-label';
+                wl.textContent = 'من شغله';
+                w.appendChild(wl);
+                var grid = document.createElement('div');
+                grid.className = 'anj-works-grid';
+                p.works.forEach(function (src) {
+                    var a = document.createElement('a');
+                    a.href = src;
+                    a.target = '_blank';
+                    a.rel = 'noopener';
+                    var img = document.createElement('img');
+                    img.src = src;
+                    img.alt = 'صورة من شغل ' + p.name;
+                    img.loading = 'lazy';
+                    a.appendChild(img);
+                    grid.appendChild(a);
+                });
+                w.appendChild(grid);
+                card.appendChild(w);
+            }
+
+            if (revs.length) {
+                var rd = document.createElement('details');
+                rd.className = 'anj-details';
+                var rs = document.createElement('summary');
+                rs.textContent = 'آراء الناس (' + revs.length + ')';
+                rd.appendChild(rs);
+                revs.slice().sort(function (a, b) { return (a.d || '') < (b.d || '') ? 1 : -1; }).forEach(function (r) {
+                    var item = document.createElement('div');
+                    item.className = 'anj-rev';
+                    var head = document.createElement('div');
+                    var rst = document.createElement('span');
+                    rst.className = 'stars';
+                    rst.textContent = starsText(r.s || 0);
+                    head.appendChild(rst);
+                    var who = document.createElement('span');
+                    who.className = 'anj-rev-who';
+                    who.textContent = r.n || 'زبون';
+                    head.appendChild(who);
+                    if (r.d) {
+                        var when = document.createElement('span');
+                        when.className = 'anj-rev-when';
+                        when.textContent = fmtDate(r.d);
+                        head.appendChild(when);
+                    }
+                    item.appendChild(head);
+                    if (r.c) {
+                        var body = document.createElement('div');
+                        body.textContent = r.c;
+                        item.appendChild(body);
+                    }
+                    rd.appendChild(item);
+                });
+                card.appendChild(rd);
+            }
+
             box.appendChild(card);
         });
     }
