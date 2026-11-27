@@ -1,5 +1,5 @@
 // إنجزني service worker: كاش بسيط عشان التطبيق يفتح بسرعة ويشتغل لو النت ضعيف.
-const CACHE = 'anjezny-v29';
+const CACHE = 'anjezny-v30';
 const SHELL = [
     './',
     'index.html',
@@ -38,6 +38,9 @@ self.addEventListener('fetch', (event) => {
     if (req.method !== 'GET') return;
     const url = new URL(req.url);
     if (url.origin !== self.location.origin) return; // الخطوط واللينكات الخارجية من الشبكة مباشرة
+
+    // ملفات التثبيت (.apk): من الشبكة دائمًا، بدون كاش، عشان أي نسخة جديدة تنزل فورًا
+    if (url.pathname.endsWith('.apk')) return;
 
     if (req.mode === 'navigate') {
         // الصفحات: الشبكة أولاً، ولو النت قطع هات من الكاش
