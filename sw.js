@@ -1,5 +1,5 @@
 // إنجزني service worker: كاش بسيط عشان التطبيق يفتح بسرعة ويشتغل لو النت ضعيف.
-const CACHE = 'anjezny-v34';
+const CACHE = 'anjezny-v35';
 const SHELL = [
     './',
     'index.html',
@@ -21,7 +21,7 @@ const SHELL = [
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
-        caches.open(CACHE).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting())
+        caches.open(CACHE).then((cache) => Promise.all(SHELL.map((u) => fetch(new Request(u, { cache: 'reload' })).then((res) => { if (!res.ok) throw new Error(u); return cache.put(u, res); })))).then(() => self.skipWaiting())
     );
 });
 
