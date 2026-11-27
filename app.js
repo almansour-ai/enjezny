@@ -55,7 +55,7 @@
         box.innerHTML = '';
         var trades = ['الكل'].concat(PROVIDERS.filter(inCat).map(function (p) { return p.trade; })
             .filter(function (t, i, a) { return t && a.indexOf(t) === i; }));
-        box.hidden = trades.length < 3;
+        box.style.display = trades.length < 3 ? 'none' : '';
         trades.forEach(function (t) {
             var b = document.createElement('button');
             b.type = 'button';
@@ -87,8 +87,9 @@
         var empty = document.getElementById('anj-empty');
         if (list.length === 0) {
             var c = catById(state.cat);
-            empty.textContent = PROVIDERS.length === 0 || (c && c.kinds && !PROVIDERS.some(inCat))
+            empty.textContent = c && c.kinds && !PROVIDERS.some(inCat)
                 ? 'لسه مفيش ' + c.label + ' مسجلين. أول ما يسجلوا هتلاقيهم هنا، ولو إنت منهم سجّل من الفورم تحت.'
+                : PROVIDERS.length === 0 ? 'الدليل لسه فاضي. أول ما الصنايعية والمحلات والشركات يسجلوا، هتلاقيهم هنا.'
                 : 'مفيش نتائج مطابقة. جرّب كلمة تانية، أو اختار «الكل» من الأصناف.';
             empty.hidden = false;
             return;
