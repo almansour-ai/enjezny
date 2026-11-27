@@ -333,3 +333,5 @@ body {
 .anj-ic svg { width: 18px; height: 18px; }
 
 .anj-note { font-weight: 700; color: var(--teal); margin: 0 0 8px; }
+
+.anj-rights { margin: 10px 0 0; font-size: 12px; }
