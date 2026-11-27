@@ -3,4 +3,5 @@
 // phone و whatsapp: الرقم بالصيغة الدولية من غير علامة +.
 const PROVIDERS = [
   {"id":"pmwzbd4qf","kind":"صنايعي","name":"على صابر","trade":"نجار","area":"الربعمايه منشأة ابو عمر","phone":"201000568679","phoneDisplay":"01000568679","whatsapp":"201000568679"},
+  {"id":"pmwzdtju9","kind":"صنايعي","name":"احمد علي","trade":"جبس بورد","area":"سعود","phone":"201024533344","phoneDisplay":"01024533344","whatsapp":"201024533344"},
 ];
