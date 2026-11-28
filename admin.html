@@ -185,7 +185,8 @@ input[type=file]{width:100%;font:inherit;font-size:15px;margin:4px 0}
     <div id="mWorksBox" class="hidden">
       <label for="fWorks">صور من شغله (أعمال سابقة)</label>
       <input type="file" id="fWorks" accept="image/*" multiple>
-      <div class="note" style="margin-top:6px">الصور بتتصغّر لوحدها عشان الموقع يفضل سريع. ولازم مفتاح النشر يكون محفوظ عشان تترفع مع الحفظ.</div>
+      <div class="note" style="margin-top:6px">الصور بتتصغّر لوحدها عشان الموقع يفضل سريع، وبتفضل متخزنة على الموبايل لحد ما تدوس "نشر التعديلات" ساعتها بتترفع.</div>
+      <label class="chk" style="margin-top:6px"><input type="checkbox" id="fWorksOk"><span>الصنايعي موافق إن صور شغله تتعرض على الدليل</span></label>
       <div id="fWorksPrev" class="wprev"></div>
     </div>
     <label class="chk"><input type="checkbox" id="fOk"><span>اتأكدت إنه وافق على ظهور اسمه ورقمه في الدليل</span></label>
@@ -216,7 +217,7 @@ input[type=file]{width:100%;font:inherit;font-size:15px;margin:4px 0}
   var published = '';     // آخر نص منشور (للمقارنة)
   var sha = null;
   var editing = null;     // id أو '' للجديد
-  var tokKey = 'anj_gh_token', draftKey = 'anj_admin_draft';
+  var tokKey = 'anj_gh_token', draftKey = 'anj_admin_draft', stageKey = 'anj_works_stage';
   var revsData = [];       // التقييمات المعتمدة الحالية
   var revsPublished = '';  // آخر نص منشور للتقييمات (للمقارنة)
   var revsCache = [], showDoneRev = false;
@@ -264,6 +265,7 @@ input[type=file]{width:100%;font:inherit;font-size:15px;margin:4px 0}
     for (var i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
     return btoa(s);
   }
+  function b64dec(b64) { return decodeURIComponent(escape(atob(b64.replace(/\n/g, '')))); }
   function b64dec(b64) {
     var bin = atob(b64.replace(/\s/g, '')), bytes = new Uint8Array(bin.length);
     for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
@@ -281,7 +283,23 @@ input[type=file]{width:100%;font:inherit;font-size:15px;margin:4px 0}
     window.scrollTo(0, 0);
   }
 
-  function dirty() { return serialize(data) !== published || serializeReviews(revsData) !== revsPublished; }
+  /* صور الشغل بتتخزن على الموبايل لحد النشر: مسار الصورة => بياناتها */
+  function loadStage() { try { return JSON.parse(localStorage.getItem(stageKey) || '{}'); } catch (e) { return {}; } }
+  function saveStage(s) { try { localStorage.setItem(stageKey, JSON.stringify(s)); return true; } catch (e) { return false; } }
+  function clearStage() { localStorage.removeItem(stageKey); }
+  function stageCount() { var n = 0, s = loadStage(); for (var k in s) n++; return n; }
+  function pruneStage() {
+    var stage = loadStage(), used = {}, changed = false;
+    data.forEach(function (p) { (p.works || []).forEach(function (w) { used[w] = 1; }); });
+    Object.keys(stage).forEach(function (k) { if (!used[k]) { delete stage[k]; changed = true; } });
+    if (changed) saveStage(stage);
+  }
+  function worksPathsIn(text) {
+    var m = text.match(/works\/[A-Za-z0-9_\-\.\/]+\.jpg/g) || [], u = [];
+    m.forEach(function (w) { if (u.indexOf(w) === -1) u.push(w); });
+    return u;
+  }
+  function dirty() { return stageCount() > 0 || serialize(data) !== published || serializeReviews(revsData) !== revsPublished; }
   function updateBar() {
     var d = dirty();
     $('pubBtn').disabled = !d;
@@ -316,7 +334,7 @@ input[type=file]{width:100%;font:inherit;font-size:15px;margin:4px 0}
       db.onclick = function () {
         if (confirm('تمسح "' + p.name + '" من الدليل؟')) {
           data = data.filter(function (x) { return x.id !== p.id; });
-          render(); updateBar();
+          pruneStage(); render(); updateBar();
         }
       };
       r.appendChild(eb); r.appendChild(db);
@@ -342,6 +360,7 @@ input[type=file]{width:100%;font:inherit;font-size:15px;margin:4px 0}
     $('fOk').checked = !!p;
     $('fProducts').value = p && p.products ? p.products.join('\n') : '';
     $('fQuote').checked = p ? !!p.quote : false;
+    $('fWorksOk').checked = !!(p && p.works && p.works.length);
     $('fWorks').value = '';
     pendingWorks = []; removedWorks = [];
     updateKindUI();
@@ -386,6 +405,13 @@ input[type=file]{width:100%;font:inherit;font-size:15px;margin:4px 0}
     if (kind.indexOf('شركة') === 0 && $('fQuote').checked) rec.quote = true;
     var keepWorks = (kind === 'صنايعي' && old && old.works)
       ? old.works.filter(function (w) { return removedWorks.indexOf(w) === -1; }) : [];
+    if (kind === 'صنايعي' && (keepWorks.length + pendingWorks.length) > 0 && !$('fWorksOk').checked) {
+      $('mErr').innerHTML = '';
+      var ec = document.createElement('div'); ec.className = 'err';
+      ec.textContent = 'لازم تتأكد إن الصنايعي موافق إن صور شغله تتعرض على الدليل.';
+      $('mErr').appendChild(ec);
+      return;
+    }
 
     var finish = function (newPaths) {
       if (kind === 'صنايعي') {
@@ -395,30 +421,27 @@ input[type=file]{width:100%;font:inherit;font-size:15px;margin:4px 0}
       if (editing) data = data.map(function (x) { return x.id === editing ? rec : x; });
       else data.push(rec);
       pendingWorks = []; removedWorks = [];
+      pruneStage();
       closeForm(); render(); updateBar();
       if (pendingReq) { setHandled(pendingReq, 'approved'); pendingReq = null; renderReqs(); }
       say('اتحفظ. فاضل تدوس "نشر التعديلات" عشان يظهر للناس.');
     };
 
     if (kind === 'صنايعي' && pendingWorks.length) {
-      if (!token()) {
-        say('الصور محتاجة مفتاح النشر عشان تترفع. حط المفتاح من تبويب "النشر" وبعدين دوس حفظ تاني.', 'warn');
+      var stage = loadStage(), newPaths = [];
+      pendingWorks.forEach(function (f, i) {
+        var path = 'works/' + rec.id + '/' + Date.now().toString(36) + i + '.jpg';
+        stage[path] = f.dataUrl;
+        newPaths.push(path);
+      });
+      if (!saveStage(stage)) {
+        $('mErr').innerHTML = '';
+        var eq = document.createElement('div'); eq.className = 'err';
+        eq.textContent = 'مساحة التخزين على الموبايل خلصت. دوس "نشر التعديلات" الأول عشان الصور المعلّقة تترفع، وبعدين ضيف صور جديدة.';
+        $('mErr').appendChild(eq);
         return;
       }
-      $('mSave').disabled = true;
-      $('mErr').innerHTML = '';
-      var w = document.createElement('div'); w.className = 'note'; w.textContent = 'جاري رفع الصور... استنى لما تخلص.';
-      $('mErr').appendChild(w);
-      uploadWorks(rec.id, pendingWorks).then(function (paths) {
-        $('mSave').disabled = false;
-        finish(paths);
-      }).catch(function (err) {
-        $('mSave').disabled = false;
-        $('mErr').innerHTML = '';
-        var e2 = document.createElement('div'); e2.className = 'err';
-        e2.textContent = err.message === 'KEY' ? 'مفتاح النشر مش شغال. جدّده من تبويب "النشر" وجرّب تاني.' : (err.message || 'حصلت مشكلة في رفع الصور. جرّب تاني.');
-        $('mErr').appendChild(e2);
-      });
+      finish(newPaths);
       return;
     }
     finish([]);
@@ -454,7 +477,7 @@ input[type=file]{width:100%;font:inherit;font-size:15px;margin:4px 0}
       data = (dp && serialize(dp) !== published) ? dp : parse(both[0]);
       revsData = (dr && serializeReviews(dr) !== revsPublished) ? dr : liveRevs;
       if (hasDraft) say('رجّعتلك تعديلاتك اللي لسه منشورتش.', 'warn');
-      render(); updateBar();
+      pruneStage(); render(); updateBar();
     }).catch(function (e) { say('مشكلة في التحميل: ' + e.message + '. جرّب تحدّث الصفحة.', 'err'); $('status').textContent = 'مش قادر أحمّل'; });
   }
 
@@ -484,12 +507,34 @@ input[type=file]{width:100%;font:inherit;font-size:15px;margin:4px 0}
     }
     $('pubBtn').disabled = true; $('status').textContent = 'جاري النشر...';
     var ptext = serialize(data), rtext = serializeReviews(revsData);
-    putFile(FILE, ptext, ptext !== published, 'تحديث قايمة الصنايعية والمحلات من لوحة التحكم').then(function () {
+    var stage = loadStage(), oldWorks = [];
+    api('/contents/' + FILE + '?ref=' + BRANCH).then(function (r) {
+      if (r.status === 401 || r.status === 403) throw new Error('KEY');
+      if (r.status === 404) return '';
+      if (!r.ok) throw new Error('ماقدرتش أقرا الملف من GitHub (' + r.status + ')');
+      return r.json();
+    }).then(function (j) {
+      if (j && j.content) oldWorks = worksPathsIn(b64dec(j.content));
+      if (Object.keys(stage).length) $('status').textContent = 'جاري رفع الصور...';
+      return uploadStaged(stage);
+    }).then(function () {
+      return putFile(FILE, ptext, ptext !== published, 'تحديث قايمة الصنايعية والمحلات من لوحة التحكم');
+    }).then(function () {
       published = ptext;
       return putFile(REVIEWS_FILE, rtext, rtext !== revsPublished, 'تحديث تقييمات الدليل من لوحة التحكم');
     }).then(function () {
-      revsPublished = rtext; updateBar();
-      say('اتنشر. هيظهر في الموقع والتطبيق بعد دقيقة تقريبًا.');
+      revsPublished = rtext;
+      clearStage();
+      var newWorks = worksPathsIn(ptext);
+      var gone = oldWorks.filter(function (w) { return newWorks.indexOf(w) === -1; });
+      var failed = 0, seq = Promise.resolve();
+      gone.forEach(function (w) { seq = seq.then(function () { return deleteRepoFile(w).catch(function () { failed++; }); }); });
+      return seq.then(function () {
+        updateBar();
+        if (failed) say('اتنشر، بس ' + failed + ' من الصور القديمة ماتمسحتش من المخزن. ابعت لمساعدك وهو يمسحها.', 'warn');
+        else if (gone.length) say('اتنشر واتمسحت ' + gone.length + ' صورة قديمة من المخزن. هيظهر التحديث بعد دقيقة تقريبًا.');
+        else say('اتنشر. هيظهر في الموقع والتطبيق بعد دقيقة تقريبًا.');
+      });
     }).catch(function (e) {
       updateBar();
       if (e.message === 'KEY') say('المفتاح مش شغال أو خلصت صلاحيته. اعمل مفتاح جديد وحطه من تبويب "النشر".', 'err');
@@ -670,6 +715,7 @@ input[type=file]{width:100%;font:inherit;font-size:15px;margin:4px 0}
     $('fOk').checked = s.ok;
     $('fProducts').value = s.price || '';
     $('fQuote').checked = false;
+    $('fWorksOk').checked = false;
     $('fWorks').value = '';
     pendingWorks = []; removedWorks = [];
     updateKindUI();
@@ -890,10 +936,11 @@ input[type=file]{width:100%;font:inherit;font-size:15px;margin:4px 0}
     var box = $('fWorksPrev');
     if (!box) return;
     box.innerHTML = '';
+    var stage = loadStage();
     if (p && p.works) p.works.forEach(function (w) {
       if (removedWorks.indexOf(w) !== -1) return;
       var d = document.createElement('div'); d.className = 'wp';
-      var im = document.createElement('img'); im.src = w; im.alt = '';
+      var im = document.createElement('img'); im.src = stage[w] || w; im.alt = '';
       var x = document.createElement('button'); x.type = 'button'; x.textContent = 'شيل';
       x.onclick = function () { removedWorks.push(w); renderWorksPrev(p); };
       d.appendChild(im); d.appendChild(x); box.appendChild(d);
@@ -907,23 +954,38 @@ input[type=file]{width:100%;font:inherit;font-size:15px;margin:4px 0}
     });
   }
 
-  function uploadWorks(pid, files) {
-    var paths = [];
+  function uploadStaged(stage) {
     var seq = Promise.resolve();
-    files.forEach(function (f, i) {
+    Object.keys(stage).forEach(function (path) {
       seq = seq.then(function () {
-        var path = 'works/' + pid + '/' + Date.now().toString(36) + i + '.jpg';
-        return api('/contents/' + path, {
-          method: 'PUT',
-          body: JSON.stringify({ message: 'صورة من شغل صنايعي في الدليل', content: f.dataUrl.split(',')[1], branch: BRANCH })
+        return api('/contents/' + path + '?ref=' + BRANCH).then(function (r) {
+          if (r.status === 401 || r.status === 403) throw new Error('KEY');
+          if (r.status === 404) return null;
+          if (!r.ok) throw new Error('ماقدرتش أجهّز الصور (' + r.status + ')');
+          return r.json();
+        }).then(function (j) {
+          var body = { message: 'صورة من شغل صنايعي في الدليل', content: stage[path].split(',')[1], branch: BRANCH };
+          if (j && j.sha) body.sha = j.sha;
+          return api('/contents/' + path, { method: 'PUT', body: JSON.stringify(body) });
         }).then(function (r) {
           if (r.status === 401 || r.status === 403) throw new Error('KEY');
           if (!r.ok) throw new Error('رفع صورة فشل (' + r.status + ')');
-          paths.push(path);
         });
       });
     });
-    return seq.then(function () { return paths; });
+    return seq;
+  }
+
+  function deleteRepoFile(path) {
+    return api('/contents/' + path + '?ref=' + BRANCH).then(function (r) {
+      if (r.status === 404) return null;
+      if (!r.ok) throw new Error('x');
+      return r.json();
+    }).then(function (j) {
+      if (!j) return;
+      return api('/contents/' + path, { method: 'DELETE', body: JSON.stringify({ message: 'مسح صورة أعمال سابقة من لوحة التحكم', sha: j.sha, branch: BRANCH }) })
+        .then(function (r) { if (!r.ok) throw new Error('x'); });
+    });
   }
   /* ===== نهاية جزء الصور ===== */
 
@@ -972,17 +1034,19 @@ input[type=file]{width:100%;font:inherit;font-size:15px;margin:4px 0}
     return t;
   }
   $('copyBtn').onclick = function () {
+    if (stageCount() > 0) say('خد بالك: في صور لسه ماتنشرتش ومش بتتنسخ مع الملف. دوس "نشر التعديلات" عشان تترفع.', 'warn');
     var t = combinedText();
     (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { say('اتنسخ. الصقه في الشات وابعته.'); }, function () { prompt('انسخ الملف من هنا:', t); });
   };
   $('shareBtn').onclick = function () {
+    if (stageCount() > 0) say('خد بالك: في صور لسه ماتنشرتش ومش بتتنسخ مع الملف. دوس "نشر التعديلات" عشان تترفع.', 'warn');
     var t = combinedText();
     if (navigator.share) navigator.share({ title: 'anjezny-files', text: t }).catch(function () {});
     else $('copyBtn').click();
   };
   $('resetBtn').onclick = function () {
     if (!dirty()) return;
-    if (confirm('تلغي كل التعديلات اللي منشورتش؟')) { localStorage.removeItem(draftKey); load(); say('رجعنا لآخر نسخة منشورة.'); }
+    if (confirm('تلغي كل التعديلات اللي منشورتش؟')) { localStorage.removeItem(draftKey); clearStage(); load(); say('رجعنا لآخر نسخة منشورة.'); }
   };
   window.addEventListener('beforeunload', function (e) { if (dirty()) { e.preventDefault(); e.returnValue = ''; } });
 
